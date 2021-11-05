@@ -56,3 +56,105 @@ const clockTick = () => {
     }
 }
 
+const getQuestion = () => {
+    // get current question from question array 
+    var currentQuestion = questions[currentQuestionIndex];
+
+    // update question title with current question 
+    var questionTitleElement = document.getElementById("question-title");
+    questionTitleElement.textContent = currentQuestion.title;
+
+    // clear the question choices text content 
+    choicesElement.innerHTML = "";
+
+    // loop over choices 
+    currentQuestion.choices.forEach(function(choice, i) {
+        // new button per choice 
+        var choiceNode = document.createElement("button");
+        choiceNode.setAttribute("class", "choice");
+        choiceNode.setAttribute("value", choice);
+
+        choiceNode.textContent = i + 1 + ". " + choice; 
+
+        // event listener on click for each choice 
+        choiceNode.onclick = questionClick;
+
+        // display on page
+        choicesElement.appendChild(choiceNode);
+    });
+}
+
+const questionClick = () => {
+    // check if user correctly chose the answer or not 
+    if (this.value !== questions[currentQuestionIndex].answer) {
+        // penalize if wrong 
+        time -= 15;
+
+        // bring time to 0 if penalized less than 0
+        if (time < 0) {
+            time = 0;
+        }
+
+        // display the updated time on the page 
+        timerElement.textContent = time;
+
+        feedbackElement.textContent = "Wrong answer.";
+    } else {
+        feedbackElement.textContent = "Correct answer.";
+    }
+
+    // show feedback for a brief period of time 
+    feedbackElement.setAttribute("class", "feedback");
+    setTimeout(function() {
+        feedbackElement.setAttribute("class", "feedback hide");
+    }, 1000);
+
+    // move to the next question
+    currentQuestionIndex++;
+
+    // check to see if any questions remain in array
+    if (currentQuestionIndex === questions.length) {
+        endQuiz();
+    } else {
+        getQuestion();
+    }
+}
+
+const saveScore = () => {
+    // get value of name input box 
+    var userName = nameElement.value.trim();
+
+    // validation that input was not empty 
+    if (userName !== "") {
+        // get scores from localStorage or set to empty array if none
+        var highscores = JSON.parse(window.localStorage.getItem("highscores")) || [];
+
+        var newScore = {
+            score: time,
+            name: userName
+        };
+
+        // save to localStorage 
+        highscores.push(newScore);
+        window.localStorage.setItem("highscores", JSON.stringify(highscores));
+
+        // redirect to scores page 
+        window.location.href = "scores.html";
+    }
+}
+
+const checkForEnter = (event) => {
+    if (event.key === "Enter") {
+        saveScore();
+    }
+}
+
+
+// onclick button to start quiz 
+startElement.onclick = startQuiz;
+
+// onclick button to submit name 
+submitElement.onclick = saveScore;
+
+// onkeyup to check for enter 
+nameElement.onkeyup = checkForEnter;
